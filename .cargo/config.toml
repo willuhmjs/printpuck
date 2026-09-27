@@ -1,0 +1,20 @@
+[target.xtensa-esp32s3-none-elf]
+runner = "espflash flash --monitor --chip esp32s3"
+
+[env]
+ESP_LOG="info"
+
+# For C dependencies built via `cc` (none today, but keep the toolchain right
+# if one lands): the generic xtensa-esp-elf-gcc defaults to big-endian and
+# fails the link. Same reasoning as the assistant's config.
+CC_xtensa_esp32s3_none_elf = "xtensa-esp32s3-elf-gcc"
+CFLAGS_xtensa_esp32s3_none_elf = "-mlongcalls"
+
+[build]
+rustflags = [
+  "-C", "link-arg=-nostartfiles",
+]
+target = "xtensa-esp32s3-none-elf"
+
+[unstable]
+build-std = ["alloc", "core"]

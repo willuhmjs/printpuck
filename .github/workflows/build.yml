@@ -1,0 +1,46 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust esp toolchain
+        run: |
+          curl -L https://github.com/esp-rs/espup/releases/latest/download/espup-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          ./espup install
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      - name: Build firmware
+        run: |
+          source "$HOME/export-esp.sh"
+          cargo build --release
+
+      - name: Package flashable image
+        run: |
+          source "$HOME/export-esp.sh"
+          espflash save-image --chip esp32s3 --merge \
+            target/xtensa-esp32s3-none-elf/release/printpuck \
+            printpuck-merged.bin
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: printpuck-merged
+          path: printpuck-merged.bin
+
+      - name: Attach to release on tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: printpuck-merged.bin

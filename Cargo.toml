@@ -1,0 +1,109 @@
+[package]
+edition      = "2024"
+name         = "printpuck"
+rust-version = "1.88"
+version      = "0.1.0"
+
+[[bin]]
+name = "printpuck"
+path = "./src/bin/main.rs"
+
+[dependencies]
+esp-hal = { version = "~1.1.0", features = ["esp32s3", "log-04", "unstable"] }
+
+esp-rtos = { version = "0.3.0", features = [
+  "embassy",
+  "esp-alloc",
+  "esp-radio",
+  "esp32s3",
+  "log-04",
+] }
+
+esp-bootloader-esp-idf = { version = "0.5.0", features = ["esp32s3", "log-04"] }
+log                    = "0.4.27"
+
+# Settings persistence. Pinned to 0.9 (same reason as the assistant: 0.10
+# needs esp-hal ~1.2.0-rc.0, which conflicts with lcd-async / ws2812-rmt pins).
+esp-storage      = { version = "0.9.0", features = ["esp32s3"] }
+embedded-storage = "0.3.1"
+
+# SoftAP setup portal codecs (features dropped for the embassy-net 0.8/0.9
+# clash - see the assistant's Cargo.toml for the full story; same applies here).
+edge-dhcp    = { version = "0.8.0", default-features = false }
+edge-captive = { version = "0.8.0", default-features = false }
+
+embassy-net = { version = "0.9.1", features = [
+  "dhcpv4",
+  "dns",
+  "log",
+  "medium-ethernet",
+  "tcp",
+  "udp",
+] }
+embedded-io = "0.7.1"
+embedded-io-async = "0.7.0"
+
+# TLS to the printer's local MQTT broker (port 8883). We drive embedded-tls
+# directly (no reqwless - that's an HTTP client). "alloc" adds the RSA
+# signature schemes to the ClientHello; Bambu's broker presents an RSA cert
+# (its TLS stack is wolfSSL), and without RSA schemes the handshake dies with
+# a fatal handshake_failure alert. Same lesson the assistant learned the hard
+# way against its RSA-cert host.
+embedded-tls = { version = "0.18", default-features = false, features = ["alloc"] }
+der = { version = "0.8", default-features = false, features = ["derive", "heapless"] }
+rand_core = { version = "0.6", default-features = false }
+rand_chacha = { version = "0.3", default-features = false }
+
+micromath = "2.1"
+ws2812-rmt = { version = "0.2.0", features = ["esp32s3"] }
+lcd-async = "0.1.3"
+embedded-graphics = "0.8"
+embedded-hal = "1.0"
+embedded-hal-async = "1.0"
+embedded-hal-bus = { version = "0.3", features = ["async"] }
+heapless = "0.9"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
+esp-alloc = "0.10.0"
+esp-backtrace = { version = "0.19.0", features = [
+  "esp32s3",
+  "panic-handler",
+  "println",
+] }
+esp-println = { version = "0.17.0", features = ["esp32s3", "log-04"] }
+embassy-executor = { version = "0.10.0", features = ["log"] }
+embassy-time = { version = "0.5.0", features = ["log"] }
+embassy-sync = "0.7"
+embassy-futures = "0.1"
+esp-radio = { version = "0.18.0", features = [
+  "esp-alloc",
+  "esp32s3",
+  "log-04",
+  "unstable",
+  "wifi",
+] }
+smoltcp = { version = "0.13.0", default-features = false, features = [
+  "log",
+  "medium-ethernet",
+  "multicast",
+  "proto-dhcpv4",
+  "proto-dns",
+  "proto-ipv4",
+  "socket-dns",
+  "socket-icmp",
+  "socket-raw",
+  "socket-tcp",
+  "socket-udp",
+] }
+
+critical-section = "1.2.0"
+static_cell      = "2.1.1"
+
+[profile.dev]
+opt-level = "s"
+
+[profile.release]
+codegen-units = 1
+debug         = 2
+lto           = 'fat'
+opt-level     = 's'

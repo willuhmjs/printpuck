@@ -17,10 +17,11 @@ jobs:
 
       - name: Install espup + espflash
         run: |
-          rustup update stable
           cargo install espup --locked
           cargo install espflash --locked
+          mv rust-toolchain.toml rust-toolchain.toml.bak
           espup install
+          mv rust-toolchain.toml.bak rust-toolchain.toml
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
       - name: Build firmware
